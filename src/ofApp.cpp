@@ -35,7 +35,8 @@ void ofApp::setup(){
         loadVideo(result.getPath(),result.getName());
     }
     
-    font.loadFont("GUI/NewMedia Fett.ttf", 15, true, true);
+    
+    font.loadFont("sans-serif", 15, true, true);
 	font.setLineHeight(34.0f);
 	font.setLetterSpacing(1.035);
     
@@ -646,27 +647,27 @@ void ofApp::keyPressed(int key){
             break;
         case 'r':
             if (loopSelected >=0 && !refiningLoop) {
-                //timeline.stop();
+                timeline.stop();
                 refineLoop();
             }
             else if(refiningLoop){
-                //timeline.stop();
-                ofRange inOutTotal = ofRange(0.0,1.0);
-                timeline.setInOutRange(inOutTotal);
+                timeline.stop();
+                //ofRange inOutTotal = ofRange(0.0,1.0);
+                //timeline.setInOutRange(inOutTotal);
+                timeline.clearInOut();
                 timeline.getZoomer()->setViewRange(oldRange);
                 refiningLoop = false;
-                //needToInitEnds = true;
                 updateRefinedLoop();
                 needToInitEnds = true;
             }
             break;
         case 'n':
             if (refiningLoop){
-                ofRange inOutTotal = ofRange(0.0,1.0);
-                timeline.setInOutRange(inOutTotal);
+                timeline.stop();
+                //ofRange inOutTotal = ofRange(0.0,1.0);
+                //timeline.setInOutRange(inOutTotal);
+                timeline.clearInOut();
                 timeline.getZoomer()->setViewRange(oldRange);
-                //timeline.stop();
-                //needToInitEnds = true;
                 instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop.";
                 setGuiInstructions();
                 needToInitEnds = true;
@@ -688,6 +689,10 @@ void ofApp::keyPressed(int key){
                 int end = tempLoopIndeces[1];
                 timeline.setOutPointAtFrame(end);
                 timeline.getZoomer()->setViewRange(timeline.getInOutRange());
+                if (!timeline.getIsPlaying()) {
+                    timeVid.setFrame(end);
+                    timeVid.update();
+                }
             }
             break;
         case 'p':
@@ -696,6 +701,10 @@ void ofApp::keyPressed(int key){
                 int end = tempLoopIndeces[1];
                 timeline.setOutPointAtFrame(end);
                 timeline.getZoomer()->setViewRange(timeline.getInOutRange());
+                if (!timeline.getIsPlaying()) {
+                    timeVid.setFrame(end);
+                    timeVid.update();
+                }
             }
             break;
         case 'k':
@@ -704,6 +713,10 @@ void ofApp::keyPressed(int key){
                 int start = tempLoopIndeces[0];
                 timeline.setInPointAtFrame(start);
                 timeline.getZoomer()->setViewRange(timeline.getInOutRange());
+                if (!timeline.getIsPlaying()) {
+                    timeVid.setFrame(start);
+                    timeVid.update();
+                }
             }
             break;
         case 'l':
@@ -712,6 +725,10 @@ void ofApp::keyPressed(int key){
                 int start = tempLoopIndeces[0];
                 timeline.setInPointAtFrame(start);
                 timeline.getZoomer()->setViewRange(timeline.getInOutRange());
+                if (!timeline.getIsPlaying()) {
+                    timeVid.setFrame(start);
+                    timeVid.update();
+                }
             }
             break;
 		default:
@@ -730,7 +747,7 @@ void ofApp::refineLoop(){
     tempLoopIndeces[1] = end;
     timeVid.setFrame(start);
     timeVid.update();
-    timeline.stop();
+    //timeline.stop();
     timeline.setInPointAtFrame(start);
     timeline.setOutPointAtFrame(end);
     timeline.getZoomer()->setViewRange(timeline.getInOutRange());
@@ -949,8 +966,9 @@ void ofApp::loadVideo(string videoPath, string videoName){
     timeline.setAutosave(false);
     timeline.setShowTicker(false);
     timeline.setShowBPMGrid(false);
-    ofRange inOut = ofRange(0,1.0);
-    timeline.setInOutRange(inOut);
+    //ofRange inOut = ofRange(0,1.0);
+    //timeline.setInOutRange(inOut);
+    timeline.clearInOut();
     timeline.getZoomer()->setViewExponent(1);
     //set big initial duration, longer than the video needs to be
 	timeline.setDurationInFrames(20000);
