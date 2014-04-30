@@ -1,0 +1,12 @@
+ofxGui
+ofxOpenCv
+ofxXmlSettings
+ofxCv
+ofxGifEncoder
+ofxMSATimer
+ofxRange
+ofxTextInputField
+ofxTimecode
+ofxTimeline
+ofxTween
+ofxUI
