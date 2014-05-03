@@ -59,8 +59,6 @@ public:
     
     vector<cv::Mat> allFrames;
     vector< vector<ofImage> > loops;
-    vector<ofImage> mostRecentSaved;
-    int mostReceIndex;
     //vector<ofVec2f> loopIndeces;
     vector< vector<int> > loopIndeces;
     int tempLoopIndeces[2];
@@ -70,7 +68,10 @@ public:
     vector<int> loopLengths;
     vector<int> loopPlayIdx;
     vector<ofRectangle> loopDrawRects;
-    ofPoint drawLoopPoint;
+    vector<ofPoint> drawLoopPoints;
+    vector<int> loopsOnDisplay;
+    int loopPage;
+    //ofPoint drawLoopPoint;
     vector<float> loopQuality;
     float loopWidth;
     float loopHeight;
@@ -116,6 +117,8 @@ public:
     
     bool pausePlayback;
     bool videoLoaded;
+    bool videoGood;
+    bool newVideo;
     
     int numLoopsInRow;
     ofRectangle loopThumbBounds;
@@ -126,8 +129,14 @@ public:
     
     //GUI STUFF
 	void setGuiMatch();
+    void setGuiLoops();
     void setGuiInstructions();
 	ofxUISuperCanvas *guiMatch;
+    ofxUISuperCanvas *guiLoops;
+    ofxUITextArea *loopsIndexLabel;
+    ofxUITextArea *loopsFoundLabel;
+    bool pageLeft;
+    bool pageRight;
     ofxUISlider *minMove;
     ofxUISlider *maxMove;
     ofxUIRangeSlider *loopLengthSlider;
