@@ -304,6 +304,8 @@
 		1881A04319109F7B001B5F45 /* ofxTLVideoTrack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxTLVideoTrack.h; sourceTree = "<group>"; };
 		1881A04419109F7B001B5F45 /* ofxTLZoomer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxTLZoomer.cpp; sourceTree = "<group>"; };
 		1881A04519109F7B001B5F45 /* ofxTLZoomer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxTLZoomer.h; sourceTree = "<group>"; };
+		18B00F821915E005006701C8 /* loopFindThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = loopFindThread.h; sourceTree = "<group>"; };
+		18B00F8619160BDE006701C8 /* loopFindEvents.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = loopFindEvents.h; sourceTree = "<group>"; };
 		1902452F5E510A2DBC1E5BD6 /* ofxUIMultiImageToggle.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUIMultiImageToggle.h; path = ../../../addons/ofxUI/src/ofxUIMultiImageToggle.h; sourceTree = SOURCE_ROOT; };
 		1C0DA2561397A7DE0246858B /* ofxGuiGroup.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxGuiGroup.h; path = ../../../addons/ofxGui/src/ofxGuiGroup.h; sourceTree = SOURCE_ROOT; };
 		1C43CDB79BF40EA7424B9680 /* ofxUISuperCanvas.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUISuperCanvas.h; path = ../../../addons/ofxUI/src/ofxUISuperCanvas.h; sourceTree = SOURCE_ROOT; };
@@ -1643,6 +1645,8 @@
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
+				18B00F821915E005006701C8 /* loopFindThread.h */,
+				18B00F8619160BDE006701C8 /* loopFindEvents.h */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;

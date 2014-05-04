@@ -5,9 +5,14 @@
 #include "ofxGifEncoder.h"
 #include "ofxUI.h"
 #include "ofxTimeline.h"
+#include "loopFindThread.h"
+#include "loopFindEvents.h"
 
 class ofApp : public ofBaseApp{
 public:
+    ofApp(){
+        
+    }
     void setup();
     void update();
     void draw();
@@ -34,6 +39,8 @@ public:
     void loadVideo(string videoPath, string videoName);
     void playStopped(ofxTLPlaybackEventArgs& playbackEvent);
     void playStarted(ofxTLPlaybackEventArgs& playbackEvent);
+    void foundLoop(loopFoundEventArgs& loopArgs);
+    void addLoopFrames();
     
     ofTrueTypeFont font;
     
@@ -62,7 +69,7 @@ public:
     //vector<ofVec2f> loopIndeces;
     vector< vector<int> > loopIndeces;
     int tempLoopIndeces[2];
-    vector< vector<ofImage> > displayLoops;
+    vector< vector<ofImage*> > displayLoops;
     vector< cv::Mat > loopStartMats;
     vector<int> matchIndeces;
     vector<int> loopLengths;
@@ -145,5 +152,11 @@ public:
     string pauseInstruct;
 	bool hideGUI;
 	void guiEvent(ofxUIEventArgs &e);
+    
+    //Testing Thread
+    vector< loopFindThread*> threads;
+    loopFindThread thread;
+    
+    loopFindEvents loopEvents;
 
 };
