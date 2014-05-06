@@ -61,6 +61,7 @@ void ofApp::setup(){
     ofAddListener(timeline.events().playbackEnded, this, &ofApp::playStopped);
     ofAddListener(timeline.events().playbackStarted, this, &ofApp::playStarted);
     ofAddListener(timeline.events().playheadScrubbed, this, &ofApp::playScrubbed);
+    ofAddListener(timeline.events().playbackLooped, this, &ofApp::playLooped);
     ofAddListener(thread.loopEvents.loopFoundEvent,this,&ofApp::foundLoop);
     
     //guiMatch->loadSettings("guiMatchSettings.xml");
@@ -129,214 +130,6 @@ void ofApp::populateLoopEnds(){
     vidPlayer.update();
 }
 
-//------------------------------------------------------------------------------------
-/*bool ofApp::checkForLoop(){
-
-    if (potentialLoopEnds.size() == 0)
-        return false;
-    
-    cv::Mat start;
-    potentialLoopEnds.at(0).copyTo(start);
-    cv::Scalar startMean = cv::mean(start);
-    cv::subtract(start, startMean, start);
-    float startSum = cv::sum(start)[0] + 1; //add one to get rid of division by 0 if screen is black
-    cv::Mat currEnd;
-    for (int i = minPeriod; i < potentialLoopEnds.size(); i++) {
-        cv::Mat currEnd;
-        potentialLoopEnds.at(i).copyTo(currEnd);
-        cv::subtract(currEnd, startMean, currEnd);
-        cv::Mat diff;
-        cv::absdiff(start, currEnd, diff);
-        float endDiff = cv::sum(diff)[0] + 1;
-        float changeRatio = endDiff/startSum;
-        
-        
-        if (changeRatio < minChangeRatio) {
-            minChangeRatio = changeRatio;
-            //cout << "min Ratio: " << minChangeRatio << endl;
-        }
-        
-        cout << "frameStart: " << frameStart << endl;
-        cout << "compare Frame: " << frameStart + i << endl;
-        cout << "startSum: " << startSum << endl;
-        cout << "endSum: " << cv::sum(currEnd)[0] + 1 << endl;
-        cout << "endDiff: " << endDiff << endl;
-        cout << "change Ratio: " << changeRatio*100 << endl;
-        cout << "test Thresh: " << 100 - loopThresh << endl;
-        cout << endl;
-        
-        if ((changeRatio*100) < (100 - loopThresh)){//set to change percentage
-            potentialEndIdx = frameStart + i;
-            //cout << "potentialEnd: " << potentialEndIdx << endl;
-            if (minMovementBool || maxMovementBool){
-                if  (hasMovement()){
-                    matchIndeces.push_back(potentialEndIdx);
-                    bestMatches.push_back(currEnd);
-                }
-                else{
-                    //timeline.setCurrentFrame(potentialEndIdx);
-                    //frameStart = potentialEndIdx;
-                    //timeline.setCurrentFrame(frameStart);
-                    //vidPlayer.setFrame(timeline.getCurrentFrame());
-                    vidPlayer.setFrame(frameStart);
-                    vidPlayer.update();
-                    return false;
-                }
-            }
-            else{
-                matchIndeces.push_back(potentialEndIdx);
-                bestMatches.push_back(currEnd);
-            }
-        }
-    }
-    
-    if (bestMatches.size() > 0) {
-        vidPlayer.setFrame(frameStart);
-        vidPlayer.update();
-        getBestLoop(start,startMean);
-        vidPlayer.setFrame(frameStart);
-        vidPlayer.update();
-        return true;
-    }
-    
-    vidPlayer.setFrame(frameStart);
-    vidPlayer.update();
-    return false;
-}
-
-//------------------------------------------------------------------------------------
-bool ofApp::hasMovement(){
-    float sumDiff = 0;
-    
-    cv::Mat prevFrame;
-    potentialLoopEnds.at(0).copyTo(prevFrame);
-    cv::Scalar prevMean = cv::mean(prevFrame); //DO MEAN INSIDE LOOP?
-    cv::subtract(prevFrame,prevMean,prevFrame);
-    float prevSum = cv::sum(prevFrame)[0] + 1; //add one to get rid of division by 0 if screen is black
-
-    cv::Mat currFrame;
-    
-    //for (int i = 1; i <= potentialEndIdx - timeline.getCurrentFrame(); i++) {
-    for (int i = 1; i <= potentialEndIdx - frameStart; i++) {
-        cv::Mat currFrame;
-        potentialLoopEnds.at(i).copyTo(currFrame);
-        cv::subtract(currFrame, prevMean, currFrame);
-        cv::Mat diff;
-        cv::absdiff(currFrame,prevFrame,diff);
-        float endDiff = cv::sum(diff)[0] + 1;
-        float changeRatio = endDiff;///prevSum;
-        //cout << "movement Change Ratio: " << changeRatio << endl;
-        sumDiff += changeRatio;
-        prevFrame = currFrame;
-        //prevSum = cv::sum(prevFrame)[0] + 1;
-    }
-    sumDiff /= prevSum;
-    //cout << "sum Diff: " << sumDiff << endl;
-    //cout << "minThreshold: " << minMovementThresh*(potentialEndIdx - frameStart)/100 << endl;
-    if (minMovementBool) {
-        //if(sumDiff < minMovementThresh*(potentialEndIdx - frameStart)/100 ){
-        if(sumDiff < minMovementThresh/100 ){
-            cout << "not enough movement" << endl;
-            return false;
-        }
-    }
-    else if (maxMovementBool){
-        //if(sumDiff > maxMovementThresh*(potentialEndIdx - frameStart)/100 ){
-        if(sumDiff > maxMovementThresh/100 ){
-            cout << "too much movement" << endl;
-            return false;
-        }
-    }
-    else if (minMovementBool && maxMovementBool){
-        //if(sumDiff > maxMovementThresh*(potentialEndIdx - frameStart)/100 && sumDiff < minMovementThresh*(potentialEndIdx - frameStart)/100){
-        if(sumDiff > maxMovementThresh/100 && sumDiff < minMovementThresh/100){
-            cout << "not enough movement or too much" << endl;
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-//------------------------------------------------------------------------------------
-void ofApp::getBestLoop(cv::Mat start,cv::Scalar startMean){
-    float minChange = MAXFLOAT;
-    int bestEnd = -1;
-    float startSum = cv::sum(start)[0] + 1; //add one to get rid of division by 0 if screen is black
-    
-    for (int i = 0; i < bestMatches.size(); i++) {
-        cv::Mat currEnd;
-        potentialLoopEnds.at(i).copyTo(currEnd);
-        cv::subtract(currEnd,startMean,currEnd);
-        cv::Mat diff;
-        cv::absdiff(start, currEnd, diff);
-        float endDiff = cv::sum(diff)[0] + 1;
-        float changeRatio = endDiff/startSum;
-        
-        //cout << "end of loop frame: " << matchIndeces.at(i) << endl;
-        //add flow test here
-        if (changeRatio <= minChange) {
-            minChange = changeRatio;
-            bestEnd = i;
-        }
-    }
-    
-    //ofQTKitDecodeMode decodeMode = OF_QTKIT_DECODE_PIXELS_ONLY;
-    //ofQTKitPlayer loopFrameGrabber;
-    //loopFrameGrabber.loadMovie(videoFilePath,decodeMode);
-    if (bestEnd >= 0) {
-        vector< ofImage> display;
-        //vidPlayer.idleMovie();
-        vidPlayer.setPaused(true);
-        vidPlayer.setFrame(frameStart);
-        cout << "Updating Vid Player" << endl;
-        vidPlayer.update();
-        
-        for (int j = frameStart; j <= matchIndeces.at(bestEnd); j++) {
-            //loopFrameGrabber.setFrame(j);
-            //loopFrameGrabber.update();
-            //vidPlayer.setFrame(j);
-            //vidPlayer.update();
-            ofImage loopee;
-            loopee.setFromPixels(vidPlayer.getPixels(), vidPlayer.getWidth(), vidPlayer.getHeight(), OF_IMAGE_COLOR);
-            //loopee.setFromPixels(loopFrameGrabber.getPixels(), loopFrameGrabber.getWidth(), loopFrameGrabber.getHeight(), OF_IMAGE_COLOR);
-            loopee.update();
-            ofImage displayIm;
-            displayIm.clone(loopee);
-            displayIm.resize(loopWidth,loopHeight);
-            //displayIm.resize(vidPlayer.getWidth()/numLoopsInRow, vidPlayer.getHeight()/numLoopsInRow);
-            displayIm.update();
-            //displayIm.resize(loopFrameGrabber.getWidth()/numLoopsInRow, loopFrameGrabber.getHeight()/numLoopsInRow);
-            display.push_back(displayIm);
-            vidPlayer.nextFrame();
-            cout << "Updating Vid Player" << endl;
-            vidPlayer.update();
-        }
-        vidPlayer.setFrame(frameStart);
-        cout << "Updating Vid Player" << endl;
-        vidPlayer.update();
-        //loopFrameGrabber.close();
-        
-        //ofVec2f indices = ofVec2f(frameStart, matchIndeces.at(bestEnd));
-        //int indices[2] = {frameStart,matchIndeces.at(bestEnd)};
-        vector<int> indices;
-        indices.push_back(frameStart);
-        indices.push_back(matchIndeces.at(bestEnd));
-        loopIndeces.push_back(indices);
-        loopLengths.push_back(display.size());
-        displayLoops.push_back(display);
-        loopQuality.push_back(minChange);
-        //loopQuality.push_back(1 - (minChange/100));
-        loopPlayIdx.push_back(0);
-        loopStartMats.push_back(start);
-        
-        ditchSimilarLoop();
-    }
-    
-    bestMatches.clear();
-    matchIndeces.clear();
-}*/
-
 
 //------------------------------------------------------------------------------------
 bool ofApp::ditchSimilarLoop(){
@@ -396,6 +189,10 @@ bool ofApp::ditchSimilarLoop(){
 
 //------------------------------------------------------------------------------------
 void ofApp::update(){
+    if (finishedVideo) {
+        timeVid.setFrame(0);
+        timeVid.update();
+    }
     if (loopFound) {
         addLoopFrames();
         //timeVid.setFrame(frameStart+minPeriod);
@@ -410,14 +207,9 @@ void ofApp::update(){
     }
     //cout << "frameStart: " << frameStart << endl;
     //cout << "timeVid Frame: " << timeVid.getCurrentFrame() << endl;
-    if (!refiningLoop && videoGood){
+    if (!refiningLoop && videoGood && !finishedVideo){
         frameStart = timeVid.getCurrentFrame();
         if (videoLoaded && timeline.getIsPlaying() && !needToInitEnds) {
-            if (frameStart >= vidPlayer.getTotalNumFrames()){
-                cout << "restarting?"<<endl;
-                initEnds();
-                return;
-            }
 
             if (!thread.isThreadRunning()) {
                 thread.lock();
@@ -430,14 +222,10 @@ void ofApp::update(){
                 timeVid.nextFrame();
                 timeVid.update();
             }
+            guiLoops->getCanvasTitle()->setLabel("                                  Processing");
         }
         else if (videoLoaded && needToInitEnds)
             initEnds();
-        for (int i = 0; i < loopPlayIdx.size(); i++) {
-            loopPlayIdx.at(i)++;
-            if(loopPlayIdx.at(i) >= loopLengths.at(i))
-                loopPlayIdx.at(i) = 0;
-        }
     }
     else{
         needToInitEnds = false;
@@ -445,13 +233,21 @@ void ofApp::update(){
             timeVid.nextFrame();
             timeVid.update();
         }
+        guiLoops->getCanvasTitle()->setLabel("");
     }
     loopsFoundLabel->setTextString("                              Number of Loops Found: " + ofToString(displayLoops.size()));
-    if(thread.isThreadRunning())
-        guiLoops->getCanvasTitle()->setLabel("                                  Processing...");
+    /*if(thread.isThreadRunning())
+        guiLoops->getCanvasTitle()->setLabel("                                  Processing");
     else
-        guiLoops->getCanvasTitle()->setLabel("                                      Idle");
+        guiLoops->getCanvasTitle()->setLabel("");*/
     guiLoops->update();
+    if(!refiningLoop){
+        for (int i = 0; i < loopPlayIdx.size(); i++) {
+            loopPlayIdx.at(i)++;
+            if(loopPlayIdx.at(i) >= loopLengths.at(i))
+                loopPlayIdx.at(i) = 0;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------------
@@ -889,6 +685,8 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     else if(name == "<<Page Left<<"){
         ofxUIButton *button = (ofxUIButton *) e.getButton();
         if (button->getValue() && loopPage > 0) {
+            instructions = "";
+            setGuiInstructions();
             loopSelected = -1;
             loopPage--;
             loopsOnDisplay.at(0) = loopPage*3 + 1;
@@ -900,6 +698,8 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     else if(name == ">>Page Right>>"){
         ofxUIButton *button = (ofxUIButton *) e.getButton();
         if (button->getValue() && loopPage*3 + 3 < displayLoops.size()) {
+            instructions = "";
+            setGuiInstructions();
             loopSelected = -1;
             loopPage++;
             loopsOnDisplay.at(0) = loopPage*3 + 1;
@@ -919,7 +719,6 @@ void ofApp::setGuiInstructions(){
     instructLabel->update();
     instructLabel->setVisible(true);
     guiMatch->update();
-    //guiMatch->autoSizeToFitWidgets();
 }
 
 
@@ -1111,6 +910,8 @@ void ofApp::loadVideo(string videoPath, string videoName){
         timeVid.update();
         newVideo = true;
         savingGif = false;
+        timeline.clearInOut();
+        finishedVideo = false;
     }
     else{
         videoPath = "";
@@ -1126,6 +927,7 @@ void ofApp::playStopped(ofxTLPlaybackEventArgs& bang){
 
 //--------------------------------------------------------------
 void ofApp::playStarted(ofxTLPlaybackEventArgs& bang){
+    finishedVideo = false;
     if (timeline.getCurrentFrame() != pauseFrameNum){
         cout << "playhead changed" << endl;
         needToInitEnds = true;
@@ -1139,19 +941,24 @@ void ofApp::playScrubbed(ofxTLPlaybackEventArgs& bang){
     needToInitEnds = true;
 }
 
-
+//--------------------------------------------------------------
+void ofApp::playLooped(ofxTLPlaybackEventArgs& bang){
+    if (timeline.getInOutRange() == ofRange(0.0,1.0)) {
+        finishedVideo = true;
+        needToInitEnds = true;
+    }
+}
 
 
 //--------------------------------------------------------------
 void ofApp::foundLoop(loopFoundEventArgs& loopArgs){
     loopFound = true;
-    //addLoopFrames();
 }
 
 
 //--------------------------------------------------------------
 void ofApp::addLoopFrames(){
-    thread.waitForThread();
+    thread.waitForThread(true); ///FIXXXX
     thread.lock();
     ditchSimilarLoop();
     //if(!ditchSimilarLoop()){

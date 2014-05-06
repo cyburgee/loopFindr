@@ -40,7 +40,9 @@ public:
     void playStopped(ofxTLPlaybackEventArgs& playbackEvent);
     void playStarted(ofxTLPlaybackEventArgs& playbackEvent);
     void playScrubbed(ofxTLPlaybackEventArgs& playbackEvent);
+    void playLooped(ofxTLPlaybackEventArgs& playbackEvent);
     void foundLoop(loopFoundEventArgs& loopArgs);
+    
     void addLoopFrames();
     
     ofTrueTypeFont font;
@@ -127,6 +129,7 @@ public:
     bool videoLoaded;
     bool videoGood;
     bool newVideo;
+    bool finishedVideo;
     
     int numLoopsInRow;
     ofRectangle loopThumbBounds;

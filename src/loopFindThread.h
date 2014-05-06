@@ -89,6 +89,8 @@ public:
         
         isSetup = false;
         
+        //if(!threadBeingWaitedFor)
+            //pthread_detach(pthread_self());
         // done
     }
     
@@ -229,9 +231,6 @@ public:
             }
         }
         
-        //ofQTKitDecodeMode decodeMode = OF_QTKIT_DECODE_PIXELS_ONLY;
-        //ofQTKitPlayer loopFrameGrabber;
-        //loopFrameGrabber.loadMovie(videoFilePath,decodeMode);
         if (bestEnd >= 0) {
             vector< ofImage*> display;
             vidPlayer->setPaused(true);
@@ -256,7 +255,6 @@ public:
                 displayIm->update();
                 display.push_back(displayIm);
                 vidPlayer->nextFrame();
-                cout << "Updating Vid Player" << endl;
                 vidPlayer->update();
             }
             vidPlayer->setFrame(frameStart);
