@@ -4,7 +4,8 @@ using namespace cv;
 using namespace ofxCv;
 
 void ofApp::setup(){
-
+    ofSetWindowTitle("LoopFindr");
+    
     videoLoaded = false;
     videoGood = true;
     ofSetLogLevel(OF_LOG_VERBOSE);
@@ -37,6 +38,7 @@ void ofApp::setup(){
     setGuiLoops();
     
     //LOAD VIDEO FILE
+    videoTrack = NULL;
     ofFileDialogResult result = ofSystemLoadDialog("Choose A Video File",false);
     if(result.bSuccess){
         loadVideo(result.getPath(),result.getName());
@@ -58,6 +60,7 @@ void ofApp::setup(){
     
     ofAddListener(timeline.events().playbackEnded, this, &ofApp::playStopped);
     ofAddListener(timeline.events().playbackStarted, this, &ofApp::playStarted);
+    ofAddListener(timeline.events().playheadScrubbed, this, &ofApp::playScrubbed);
     ofAddListener(thread.loopEvents.loopFoundEvent,this,&ofApp::foundLoop);
     
     //guiMatch->loadSettings("guiMatchSettings.xml");
@@ -74,20 +77,14 @@ void ofApp::setup(){
 void ofApp::initEnds(){
     if (potentialLoopEnds.size() > 0){
         potentialLoopEnds.clear();
-        //frameNumsInEnds.clear();
     }
 
-    //vidPlayer.play();
-    //vidPlayer.idleMovie();
     cout << "frameStart: " << frameStart << endl;
     vidPlayer.setPaused(true);
     vidPlayer.setFrame(frameStart);
-    //cout << "Updating Vid Player" << endl;
     vidPlayer.update();
     
     for (int i = frameStart; i < vidPlayer.getTotalNumFrames() && i < frameStart + maxPeriod; i++) {
-        //vidPlayer.setFrame(i);
-        //vidPlayer.update();
         cout << "init ends frame: " << vidPlayer.getCurrentFrame() << endl;
         cv::Mat currGray;
         cv::cvtColor(toCv(vidPlayer), currGray, CV_RGB2GRAY);
@@ -95,13 +92,11 @@ void ofApp::initEnds(){
         cv::resize(currGray, currFrame, imResize,INTER_AREA);
         
         potentialLoopEnds.push_back(currFrame);
-        //frameNumsInEnds.push_back(i);
         vidPlayer.nextFrame();
-        //cout << "Updating Vid Player" << endl;
         vidPlayer.update();
     }
+    
     vidPlayer.setFrame(frameStart);
-    //cout << "Updating Vid Player" << endl;
     vidPlayer.update();
     needToInitEnds = false;
 }
@@ -109,16 +104,13 @@ void ofApp::initEnds(){
 
 //------------------------------------------------------------------------------------
 void ofApp::populateLoopEnds(){
+    //thread.waitForThread();
     if (potentialLoopEnds.size() > 0){
         potentialLoopEnds.erase(potentialLoopEnds.begin());
-        //frameNumsInEnds.erase(frameNumsInEnds.begin());
         
         int endIdx = frameStart + maxPeriod;
-        //cout << "adding frame at: " << endIdx << endl;
-        //vidPlayer.idleMovie();
         if (endIdx < vidPlayer.getTotalNumFrames()){
             vidPlayer.setFrame(endIdx);
-            //cout << "Updating Vid Player" << endl;
             vidPlayer.update();
             
             cv::Mat endGray;
@@ -127,16 +119,13 @@ void ofApp::populateLoopEnds(){
             cv::resize(endGray, endFrame, imResize,INTER_AREA);
             
             potentialLoopEnds.push_back(endFrame);
-            //frameNumsInEnds.push_back(endIdx);
         }
     }
     else{
         initEnds();
     }
     
-    //vidPlayer.setFrame(timeline.getCurrentFrame());
     vidPlayer.setFrame(frameStart);
-    //cout << "Updating Vid Player" << endl;
     vidPlayer.update();
 }
 
@@ -358,12 +347,6 @@ bool ofApp::ditchSimilarLoop(){
     loopStartMats.at(loopStartMats.size()-2).copyTo(prevLoopMat);
     cv::Mat newLoopMat;
     loopStartMats.at(loopStartMats.size()-1).copyTo(newLoopMat);
-    //cv::cvtColor(toCv(displayLoops.at(displayLoops.size()-2).at(0)), prevLoopGray, CV_RGB2GRAY);
-    //cv::cvtColor(toCv(displayLoops.at(displayLoops.size()-1).at(0)), newLoopGray, CV_RGB2GRAY);
-    //cv::Mat prevLoopFrame;
-    //cv::Mat newLoopFrame;
-    //cv::resize(prevLoopGray, prevLoopFrame, imResize);
-    //cv::resize(newLoopGray, newLoopFrame, imResize);
 
     float prevLoopSum = cv::sum(prevLoopMat)[0] + 1;
     
@@ -382,6 +365,10 @@ bool ofApp::ditchSimilarLoop(){
             loopQuality.erase(loopQuality.end() - 1);
             loopLengths.erase(loopLengths.end() - 1);
             loopPlayIdx.erase(loopPlayIdx.end() - 1);
+            vector<ofImage *> disp = displayLoops.at(displayLoops.size() - 1);
+            for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
+                delete *i;
+            }
             displayLoops.erase(displayLoops.end() - 1);
             loopIndeces.erase(loopIndeces.end() - 1);
             loopStartMats.erase(loopStartMats.end() - 1);
@@ -391,6 +378,10 @@ bool ofApp::ditchSimilarLoop(){
             loopQuality.erase(loopQuality.end() - 2 );
             loopLengths.erase(loopLengths.end() - 2);
             loopPlayIdx.erase(loopPlayIdx.end() - 2);
+            vector<ofImage *> disp = displayLoops.at(displayLoops.size() - 2);
+            for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
+                delete *i;
+            }
             displayLoops.erase(displayLoops.end() - 2);
             loopIndeces.erase(loopIndeces.end() - 2);
             loopStartMats.erase(loopStartMats.end() - 2);
@@ -407,6 +398,10 @@ bool ofApp::ditchSimilarLoop(){
 void ofApp::update(){
     if (loopFound) {
         addLoopFrames();
+        //timeVid.setFrame(frameStart+minPeriod);
+        //timeVid.update();
+        //frameStart = timeVid.getCurrentFrame();
+        //initEnds();
     }
     if (newVideo) {
         timeVid.setFrame(0);
@@ -424,23 +419,20 @@ void ofApp::update(){
                 return;
             }
 
-            //if(checkForLoop()){
-                //cout << "Loop Found" << endl;
-            //}
             if (!thread.isThreadRunning()) {
-                //thread.lock();
-                thread.setup(&loops, &loopIndeces, &displayLoops, &loopStartMats, &loopLengths, &loopPlayIdx, &loopQuality, loopWidth, loopHeight, minPeriod, maxPeriod, frameStart, &potentialLoopEnds, /*imResize,*/ minMovementThresh, maxMovementThresh, loopThresh, minChangeRatio, minMovementBool, maxMovementBool, videoFilePath);
+                thread.lock();
+                thread.setup(&loops, &loopIndeces, &displayLoops, &loopStartMats, &loopLengths, &loopPlayIdx, &loopQuality, loopWidth, loopHeight, minPeriod, maxPeriod, frameStart, &potentialLoopEnds, minMovementThresh, maxMovementThresh, loopThresh, minChangeRatio, minMovementBool, maxMovementBool, videoFilePath, &threadPlayer);
                 thread.startThread(true,true);
-                //thread.unlock();
+                thread.unlock();
+                thread.lock();
                 populateLoopEnds();
+                thread.unlock();
                 timeVid.nextFrame();
-                //cout << "Updating Time Vid" << endl;
                 timeVid.update();
             }
         }
         else if (videoLoaded && needToInitEnds)
             initEnds();
-        
         for (int i = 0; i < loopPlayIdx.size(); i++) {
             loopPlayIdx.at(i)++;
             if(loopPlayIdx.at(i) >= loopLengths.at(i))
@@ -451,16 +443,15 @@ void ofApp::update(){
         needToInitEnds = false;
         if(timeline.getIsPlaying()){
             timeVid.nextFrame();
-            //cout << "Updating Time Vid" << endl;
             timeVid.update();
         }
     }
-    /*if (videoLoaded && videoGood) {
-        //drawLoopPoint = ofPoint(guiMatch->getGlobalCanvasWidth() ,timeline.getBottomLeft().y + vidPlayer.getHeight() + loopHeight);
-        //drawLoopPoint = ofPoint(guiMatch->getGlobalCanvasWidth() ,ofGetHeight() - loopHeight);
-        //loopThumbBounds = ofRectangle(drawLoopPoint, ofGetWidth()-guiMatch->getGlobalCanvasWidth(), ofGetHeight()-timeline.getBottomLeft().y-timeVid.getHeight()-loopHeight);
-    }*/
     loopsFoundLabel->setTextString("                              Number of Loops Found: " + ofToString(displayLoops.size()));
+    if(thread.isThreadRunning())
+        guiLoops->getCanvasTitle()->setLabel("                                  Processing...");
+    else
+        guiLoops->getCanvasTitle()->setLabel("                                      Idle");
+    guiLoops->update();
 }
 
 //------------------------------------------------------------------------------------
@@ -476,11 +467,6 @@ void ofApp::draw(){
         ofRect(guiMatch->getGlobalCanvasWidth(), 0, ofGetWidth() - guiMatch->getGlobalCanvasWidth(), ofGetHeight()- loopHeight);
         ofPopStyle();
         
-        /*for (int i = 0; i < displayLoops.size(); i++) {
-            ofImage loopFrame = displayLoops.at(i).at(loopPlayIdx.at(i));
-            loopFrame.draw(drawLoopPoints.at(0));
-            //loopFrame.draw(loopDrawRects.at(i));
-        }*/
         int firstLoop = loopsOnDisplay.at(0) - 1;
         int secondLoop = loopsOnDisplay.at(1) - 1;
         int thirdLoop = loopsOnDisplay.at(2) - 1;
@@ -515,13 +501,13 @@ void ofApp::draw(){
     else if(!videoLoaded && videoGood){
         string loadVidInstruct = "No video loaded. Please click 'Load Video' and choose a valid video file.";
         float width = font.getStringBoundingBox(loadVidInstruct, 0, 0).width;
-        font.drawString(loadVidInstruct, ofGetWidth()/2 - width/2, 3*ofGetHeight()/4);
+        font.drawString(loadVidInstruct, (guiMatch->getGlobalCanvasWidth() + ofGetWidth())/2 - width/2, 3*ofGetHeight()/4);
         guiLoops->setVisible(false);
     }
     else if(!videoGood && !videoLoaded){
         string loadVidInstruct = "The video loaded is not the proper format.\nPlease click 'Load Video' and choose a valid video file.";
         float width = font.getStringBoundingBox(loadVidInstruct, 0, 0).width;
-        font.drawString(loadVidInstruct, ofGetWidth()/2 - width/2, 3*ofGetHeight()/4);
+        font.drawString(loadVidInstruct, (guiMatch->getGlobalCanvasWidth() + ofGetWidth())/2 - width/2, 3*ofGetHeight()/4);
         guiLoops->setVisible(false);
     }
     if(videoGood){
@@ -540,14 +526,6 @@ void ofApp::draw(){
 
 //------------------------------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-    /*if (scrolling && !refiningLoop){
-        for (int i = 0; i < loopDrawRects.size(); i++) {
-            dragPoint = ofPoint(0, (y - yStart)*0.5);
-            loopDrawRects.at(i).translate(dragPoint);
-        }
-        xStart = x;
-        yStart = y;
-    }*/
 }
 
 
@@ -562,17 +540,11 @@ void ofApp::mousePressed(int x, int y, int button){
                 setGuiInstructions();
             }
         }
-        /*if (loopDrawRects.size() > 0 && loopThumbBounds.inside(x, y)) {
-            scrolling = true;
-            xStart = x;
-            yStart = y;
-        }*/
     }
 }
 
 //------------------------------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-    //scrolling = false;
 }
 
 
@@ -663,9 +635,6 @@ void ofApp::keyPressed(int key){
     }
 	switch (key)
 	{
-		//case 'h':
-        //    guiMatch->toggleVisible();
-		//	break;
         case 's':
             if (loopSelected >=0 && !refiningLoop){
                 //timeline.stop();
@@ -679,8 +648,6 @@ void ofApp::keyPressed(int key){
             }
             else if(refiningLoop){
                 timeline.stop();
-                //ofRange inOutTotal = ofRange(0.0,1.0);
-                //timeline.setInOutRange(inOutTotal);
                 timeline.clearInOut();
                 timeline.getZoomer()->setViewRange(oldRange);
                 refiningLoop = false;
@@ -822,16 +789,15 @@ void ofApp::updateRefinedLoop(){
     cv::subtract(start,startMean,start);
     float startSum = cv::sum(start)[0] + 1;
     
-    //while(vidPlayer.getCurrentFrame() <= (int)loopIndeces.at(loopSelected).y){
     while(vidPlayer.getCurrentFrame() <= (loopIndeces.at(loopSelected))[1]){
         ofImage loopee;
         loopee.setFromPixels(vidPlayer.getPixels(), vidPlayer.getWidth(), vidPlayer.getHeight(), OF_IMAGE_COLOR);
         loopee.update();
-        ofImage displayIm;
-        displayIm.clone(loopee);
-        displayIm.resize(loopWidth,loopHeight);
-        displayIm.update();
-        display.push_back(&displayIm);
+        ofImage *displayIm = new ofImage();
+        displayIm->clone(loopee);
+        displayIm->resize(loopWidth,loopHeight);
+        displayIm->update();
+        display.push_back(displayIm);
         vidPlayer.nextFrame();
         //cout << "Updating Vid Player" << endl;
         vidPlayer.update();
@@ -850,7 +816,6 @@ void ofApp::updateRefinedLoop(){
     float changeRatio = endDiff/startSum;
     
     vidPlayer.setFrame(prevFrame);
-    //cout << "Updating Vid Player" << endl;
     vidPlayer.update();
     
     vector<int>::iterator it = loopLengths.begin()+loopSelected;
@@ -924,6 +889,7 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     else if(name == "<<Page Left<<"){
         ofxUIButton *button = (ofxUIButton *) e.getButton();
         if (button->getValue() && loopPage > 0) {
+            loopSelected = -1;
             loopPage--;
             loopsOnDisplay.at(0) = loopPage*3 + 1;
             loopsOnDisplay.at(1) = loopPage*3 + 2;
@@ -934,6 +900,7 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     else if(name == ">>Page Right>>"){
         ofxUIButton *button = (ofxUIButton *) e.getButton();
         if (button->getValue() && loopPage*3 + 3 < displayLoops.size()) {
+            loopSelected = -1;
             loopPage++;
             loopsOnDisplay.at(0) = loopPage*3 + 1;
             loopsOnDisplay.at(1) = loopPage*3 + 2;
@@ -1009,10 +976,13 @@ void ofApp::setGuiMatch(){
 void ofApp::setGuiLoops(){
     guiLoops = new ofxUISuperCanvas("");
     guiLoops->setWidth(ofGetWidth()-guiMatch->getGlobalCanvasWidth());
-
+    
+    guiLoops->addSpacer();
     loopsFoundLabel = guiLoops->addTextArea("Number of Loops Found", "                              Number of Loops Found: " + ofToString(displayLoops.size()));
     loopsIndexLabel = guiLoops->addTextArea("Loop Page", "                            Current Loops Displayed: " + ofToString(loopsOnDisplay.at(0)) + " - " + ofToString(loopsOnDisplay.at(2)));
     guiLoops->addSpacer();
+    pageLeft = false;
+    pageRight = false;
     guiLoops->addLabelButton("<<Page Left<<", &pageLeft);
     guiLoops->addLabelButton(">>Page Right>>" ,&pageRight);
     //guiLoops->setWidth(ofGetWidth()-guiMatch->getGlobalCanvasWidth());
@@ -1027,8 +997,10 @@ void ofApp::loadVideo(string videoPath, string videoName){
     int lastindex = videoName.find_last_of(".");
     outputPrefix = videoName.substr(0, lastindex);
     
+    
     //TIMELINE STUFF
     timeline.clear();
+    //timeline.removeTrack(videoTrack);
     timeline.setup();
     timeline.removeFromThread();
     timeline.setAutosave(false);
@@ -1041,7 +1013,6 @@ void ofApp::loadVideo(string videoPath, string videoName){
 	timeline.setLoopType(OF_LOOP_NORMAL);
     timeline.stop();
     timeline.setFrameBased(true);
-    videoTrack = timeline.getVideoTrack("Video");
     
     loopSelected = -1;
     
@@ -1056,7 +1027,6 @@ void ofApp::loadVideo(string videoPath, string videoName){
         videoLoaded = videoTrack->load(videoPath);
         videoTrack->setName(videoName);
     }
-    
     if(videoLoaded){
         int vidWidth = videoTrack->getPlayer()->getWidth();
         int vidHeight = videoTrack->getPlayer()->getHeight();
@@ -1098,20 +1068,22 @@ void ofApp::loadVideo(string videoPath, string videoName){
         timeVid.update();
         frameStart = timeVid.getCurrentFrame();
         timeline.setFrameBased(true);
-        //videoTrack->setPlayAlongToTimeline(true);
         
         scale = 10;
-       // imResize = cv::Size(videoTrack->getPlayer()->getWidth()/scale,videoTrack->getPlayer()->getHeight()/scale);
+        //imResize = cv::Size(videoTrack->getPlayer()->getWidth()/scale,videoTrack->getPlayer()->getHeight()/scale);
         imResize = cv::Size(64,64);
         guiMatch->setPosition(0, timeline.getBottomLeft().y);
         ofQTKitDecodeMode decodeMode = OF_QTKIT_DECODE_PIXELS_ONLY;
         
         vidPlayer.loadMovie(videoPath,decodeMode);
+        threadPlayer.loadMovie(videoPath,decodeMode);
         vidPlayer.setSynchronousSeeking(true);
+        threadPlayer.setSynchronousSeeking(true);
         cout << "Pix Format: " << vidPlayer.getPixelFormat() << endl;
-        //vidPlayer.idleMovie();
         vidPlayer.play();
+        threadPlayer.play();
         vidPlayer.setPaused(true);
+        threadPlayer.setPaused(true);
         videoFilePath = videoPath;
         //pausePlayback = true;
         fps = (float)vidPlayer.getTotalNumFrames()/vidPlayer.getDuration();
@@ -1123,29 +1095,27 @@ void ofApp::loadVideo(string videoPath, string videoName){
         ofPoint firstPoint = ofPoint(guiMatch->getGlobalCanvasWidth(), ofGetHeight()-loopHeight);
         ofPoint secondPoint = ofPoint(guiMatch->getGlobalCanvasWidth()+loopWidth, ofGetHeight()-loopHeight);
         ofPoint thirdPoint = ofPoint(guiMatch->getGlobalCanvasWidth()+2*loopWidth, ofGetHeight()-loopHeight);
+        drawLoopPoints.clear();
         drawLoopPoints.push_back(firstPoint);
         drawLoopPoints.push_back(secondPoint);
         drawLoopPoints.push_back(thirdPoint);
         
+        loopDrawRects.clear();
         loopDrawRects.push_back(ofRectangle(firstPoint,loopWidth,loopHeight));
         loopDrawRects.push_back(ofRectangle(secondPoint,loopWidth,loopHeight));
         loopDrawRects.push_back(ofRectangle(thirdPoint,loopWidth,loopHeight));
-        //drawLoopPoint = ofPoint(guiMatch->getGlobalCanvasWidth() ,timeline.getBottomLeft().y + vidPlayer.getHeight() + loopHeight);
-        //loopThumbBounds = ofRectangle(guiMatch->getGlobalCanvasWidth(), timeline.getBottomLeft().y + vidPlayer.getHeight() + loopHeight, ofGetWidth()-guiMatch->getGlobalCanvasWidth(), ofGetHeight()-vidPlayer.getHeight() - timeline.getBottomLeft().y - loopHeight);
         ofSetFrameRate(fps);
         refiningLoop = false;
         needToInitEnds = true;
         timeVid.setFrame(0);
         timeVid.update();
         newVideo = true;
+        savingGif = false;
     }
     else{
         videoPath = "";
         
     }
-    //settings.setValue("videoPath", videoPath);
-    //settings.saveFile();
-    
 }
 
 //--------------------------------------------------------------
@@ -1162,64 +1132,37 @@ void ofApp::playStarted(ofxTLPlaybackEventArgs& bang){
     }
 }
 
-
 //--------------------------------------------------------------
-void ofApp::foundLoop(loopFoundEventArgs& loopArgs){
-    loopFound = true;
+void ofApp::playScrubbed(ofxTLPlaybackEventArgs& bang){
+    cout << "playhead Scrubbed" << endl;
+    //timeline.stop();
+    needToInitEnds = true;
 }
 
 
 
+
+//--------------------------------------------------------------
+void ofApp::foundLoop(loopFoundEventArgs& loopArgs){
+    loopFound = true;
+    //addLoopFrames();
+}
+
+
+//--------------------------------------------------------------
 void ofApp::addLoopFrames(){
-    /*int currFrame = vidPlayer.getCurrentFrame();
-    vector<int> loopFrames = loopIndeces.at(loopIndeces.size()-1);
-    vidPlayer.setFrame(loopFrames.at(0));
-    vidPlayer.update();
-    vidPlayer.nextFrame();
-    vidPlayer.update();
-    vector<ofImage> display;
-    for (int i = loopFrames.at(0); i <= loopFrames.at(1); i++) {
-        //loopFrameGrabber.setFrame(j);
-        //loopFrameGrabber.update();
-        //vidPlayer.setFrame(j);
-        //vidPlayer.update();
-        ofImage loopee;
-        loopee.setFromPixels(vidPlayer.getPixels(), vidPlayer.getWidth(), vidPlayer.getHeight(), OF_IMAGE_COLOR);
-        //loopee.setFromPixels(loopFrameGrabber.getPixels(), loopFrameGrabber.getWidth(), loopFrameGrabber.getHeight(), OF_IMAGE_COLOR);
-        loopee.update();
-        ofImage displayIm;
-        displayIm.clone(loopee);
-        displayIm.resize(loopWidth,loopHeight);
-        //displayIm.resize(vidPlayer.getWidth()/numLoopsInRow, vidPlayer.getHeight()/numLoopsInRow);
-        displayIm.update();
-        //displayIm.resize(loopFrameGrabber.getWidth()/numLoopsInRow, loopFrameGrabber.getHeight()/numLoopsInRow);
-        display.push_back(displayIm);
-        vidPlayer.nextFrame();
-        cout << "Updating Vid Player" << endl;
-        vidPlayer.update();
-    }
-    //vidPlayer.setFrame(frameStart);
-    cout << "Updating Vid Player" << endl;
-    //vidPlayer.update();
-    //loopFrameGrabber.close();
-    
-    //ofVec2f indices = ofVec2f(frameStart, matchIndeces.at(bestEnd));
-    //int indices[2] = {frameStart,matchIndeces.at(bestEnd)};
-    //vector<int> indices;
-    
-    //indices.push_back(frameStart);
-    //indices.push_back(matchIndeces.at(bestEnd));
-    loopLengths.push_back(display.size());
-    displayLoops.push_back(display);
-    loopPlayIdx.push_back(0);
-    vidPlayer.setFrame(currFrame);
-    vidPlayer.update();*/
-    
-    vector<ofImage*> lastLoop = displayLoops.at(displayLoops.size() - 1);
-    for (int i = 0; i < lastLoop.size(); i++) {
-        (*displayLoops.at(displayLoops.size() - 1).at(i)).setUseTexture(true);
-        (*displayLoops.at(displayLoops.size() - 1).at(i)).reloadTexture();
-    }
+    thread.waitForThread();
+    thread.lock();
+    ditchSimilarLoop();
+    //if(!ditchSimilarLoop()){
+        vector<ofImage*> lastLoop = displayLoops.at(displayLoops.size() - 1);
+        for (int i = 0; i < lastLoop.size(); i++) {
+            (*displayLoops.at(displayLoops.size() - 1).at(i)).setUseTexture(true);
+            (*displayLoops.at(displayLoops.size() - 1).at(i)).reloadTexture();
+        }
+    //}
     loopFound = false;
+    thread.unlock();
+        
 }
 

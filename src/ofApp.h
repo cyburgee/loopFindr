@@ -39,6 +39,7 @@ public:
     void loadVideo(string videoPath, string videoName);
     void playStopped(ofxTLPlaybackEventArgs& playbackEvent);
     void playStarted(ofxTLPlaybackEventArgs& playbackEvent);
+    void playScrubbed(ofxTLPlaybackEventArgs& playbackEvent);
     void foundLoop(loopFoundEventArgs& loopArgs);
     void addLoopFrames();
     
@@ -140,6 +141,7 @@ public:
     void setGuiInstructions();
 	ofxUISuperCanvas *guiMatch;
     ofxUISuperCanvas *guiLoops;
+    ofxUILabel statusLabel;
     ofxUITextArea *loopsIndexLabel;
     ofxUITextArea *loopsFoundLabel;
     bool pageLeft;
@@ -156,6 +158,7 @@ public:
     //Testing Thread
     vector< loopFindThread*> threads;
     loopFindThread thread;
+    ofQTKitPlayer threadPlayer;
     
     loopFindEvents loopEvents;
 

@@ -43,43 +43,15 @@ public:
     float minChangeRatio;
     bool minMovementBool;
     bool maxMovementBool;
-    ofQTKitPlayer vidPlayer;
+    ofQTKitPlayer *vidPlayer;
     string videoPath;
     bool isSetup;
     
     ofEvent<loopFoundEventArgs> newloopEvent;
     loopFindEvents loopEvents;
 
-     /*vector< vector<ofImage> > loops = ofApp.loops;
-     vector< vector<int> > loopIndeces = ofApp.loopIndeces;
-     vector< vector<int> > loopIndeces = ofApp.displayLoops;
-     vector< cv::Mat > loopStartMats = ofApp.loopStartMats;
-     vector<int> matchIndeces;
-     vector<int> loopLengths = ofApp.loopLengths;
-     vector<int> loopPlayIdx = ofApp.loopPlayIdx;
-     vector<float> loopQuality = ofApp.loopQuality;
-     float loopWidth = ofApp.loopWidth;
-     float loopHeight = ofApp.loopWidth;
-     
-     int minPeriod = ofApp.minPeriod;
-     int maxPeriod = ofApp.maxPeriod;
-     int frameStart = ofApp.frameStart;
-     int potentialEndIdx;
-     
-     vector< cv::Mat > potentialLoopEnds;
-     vector<cv::Mat> bestMatches;
-     
-     cv::Size imResize;
-     
-     float minMovementThresh = ofApp.minMovementThresh;
-     float maxMovementThresh = ofApp.maxMovementThresh;
-     float loopThresh = ofApp.loopThresh;
-     float minChangeRatio = ofApp.minChangeRatio;
-     bool minMovementBool = ofApp.minMovementBool;
-     bool maxMovementBool = ofApp.maxMovementBool;
-    ofQTKitPlayer vidPlayer = ofApp.vidPlayer;*/
 public:
-    void setup(vector< vector<ofImage> > *loops, vector< vector<int> > *loopIndeces,vector< vector<ofImage*> > *displayLoops,vector< cv::Mat > *loopStartMats,vector<int> *loopLengths,vector<int> *loopPlayIdx,vector<float> *loopQuality,float loopWidth,float loopHeight,int minPeriod,int maxPeriod,int frameStart,vector< cv::Mat > *potentialLoopEnds,/*cv::Size imResize,*/float minMovementThresh,float maxMovementThresh,float loopThresh,float minChangeRatio,bool minMovementBool,bool maxMovementBool, string videoPath){
+    void setup(vector< vector<ofImage> > *loops, vector< vector<int> > *loopIndeces,vector< vector<ofImage*> > *displayLoops,vector< cv::Mat > *loopStartMats,vector<int> *loopLengths,vector<int> *loopPlayIdx,vector<float> *loopQuality,float loopWidth,float loopHeight,int minPeriod,int maxPeriod,int frameStart,vector< cv::Mat > *potentialLoopEnds, float minMovementThresh,float maxMovementThresh,float loopThresh,float minChangeRatio,bool minMovementBool,bool maxMovementBool, string videoPath, ofQTKitPlayer *vidPlayer){
         this->loops = loops;
         this->loopIndeces = loopIndeces;
         this->displayLoops = displayLoops;
@@ -93,14 +65,13 @@ public:
         this->maxPeriod = maxPeriod;
         this->frameStart = frameStart;
         this->potentialLoopEnds = *potentialLoopEnds;
-        //this->imResize = imResize;
         this->minMovementThresh = minMovementThresh;
         this->maxMovementThresh = maxMovementThresh;
         this->loopThresh = loopThresh;
         this->minChangeRatio = minChangeRatio;
         this->minMovementBool = minMovementBool;
         this->maxMovementBool = maxMovementBool;
-        //this->vidPlayer = vidPlayer;
+        this->vidPlayer = vidPlayer;
         this->videoPath = videoPath;
         isSetup = true;
         
@@ -110,18 +81,14 @@ public:
     void threadedFunction() {
         
         // start
-        
-        //while(isThreadRunning()) {
-            lock();
+        //lock();
         if(isSetup){
-            vidPlayer.loadMovie(videoPath, OF_QTKIT_DECODE_PIXELS_ONLY);
-            //vidPlayer.setUseTexture(false);
             checkForLoop();
         }
-            unlock();
-        //}
+        //unlock();
         
         isSetup = false;
+        
         // done
     }
     
@@ -150,14 +117,14 @@ public:
                 //cout << "min Ratio: " << minChangeRatio << endl;
             }
             
-            cout << "frameStart: " << frameStart << endl;
-            cout << "compare Frame: " << frameStart + i << endl;
-            cout << "startSum: " << startSum << endl;
-            cout << "endSum: " << cv::sum(currEnd)[0] + 1 << endl;
-            cout << "endDiff: " << endDiff << endl;
-            cout << "change Ratio: " << changeRatio*100 << endl;
-            cout << "test Thresh: " << 100 - loopThresh << endl;
-            cout << endl;
+            //cout << "frameStart: " << frameStart << endl;
+            //cout << "compare Frame: " << frameStart + i << endl;
+            //cout << "startSum: " << startSum << endl;
+            //cout << "endSum: " << cv::sum(currEnd)[0] + 1 << endl;
+            //cout << "endDiff: " << endDiff << endl;
+            //cout << "change Ratio: " << changeRatio*100 << endl;
+            //cout << "test Thresh: " << 100 - loopThresh << endl;
+            //cout << endl;
             
             if ((changeRatio*100) < (100 - loopThresh)){//set to change percentage
                 potentialEndIdx = frameStart + i;
@@ -168,12 +135,6 @@ public:
                         bestMatches.push_back(currEnd);
                     }
                     else{
-                        //timeline.setCurrentFrame(potentialEndIdx);
-                        //frameStart = potentialEndIdx;
-                        //timeline.setCurrentFrame(frameStart);
-                        //vidPlayer.setFrame(timeline.getCurrentFrame());
-                        //vidPlayer.setFrame(frameStart);
-                        //vidPlayer.update();
                         return false;
                     }
                 }
@@ -185,16 +146,9 @@ public:
         }
         
         if (bestMatches.size() > 0) {
-            //vidPlayer.setFrame(frameStart);
-            //vidPlayer.update();
             getBestLoop(start,startMean);
-            //vidPlayer.setFrame(frameStart);
-            //vidPlayer.update();
             return true;
         }
-        
-        //vidPlayer.setFrame(frameStart);
-        //vidPlayer.update();
         return false;
     }
     
@@ -280,42 +234,38 @@ public:
         //loopFrameGrabber.loadMovie(videoFilePath,decodeMode);
         if (bestEnd >= 0) {
             vector< ofImage*> display;
-            vidPlayer.setPaused(true);
-            vidPlayer.setFrame(frameStart);
-            vidPlayer.update();
+            vidPlayer->setPaused(true);
+            if (frameStart > 0){
+                vidPlayer->setFrame(frameStart-1);
+                vidPlayer->update();
+                vidPlayer->nextFrame();
+            }
+            else{
+                vidPlayer->setFrame(frameStart);
+            }
+            vidPlayer->update();
             
             for (int j = frameStart; j <= matchIndeces.at(bestEnd); j++) {
-                //loopFrameGrabber.setFrame(j);
-                //loopFrameGrabber.update();
-                //vidPlayer.setFrame(j);
-                //vidPlayer.update();
                 ofImage loopee;
                 loopee.setUseTexture(false);
-                loopee.setFromPixels(vidPlayer.getPixels(), vidPlayer.getWidth(), vidPlayer.getHeight(), OF_IMAGE_COLOR);
-                //loopee.setFromPixels(loopFrameGrabber.getPixels(), loopFrameGrabber.getWidth(), loopFrameGrabber.getHeight(), OF_IMAGE_COLOR);
+                loopee.setFromPixels(vidPlayer->getPixels(), vidPlayer->getWidth(), vidPlayer->getHeight(), OF_IMAGE_COLOR);
                 loopee.update();
                 ofImage *displayIm = new ofImage();
                 displayIm->clone(loopee);
                 displayIm->resize(loopWidth,loopHeight);
-                //displayIm.resize(vidPlayer.getWidth()/numLoopsInRow, vidPlayer.getHeight()/numLoopsInRow);
                 displayIm->update();
-                //displayIm.resize(loopFrameGrabber.getWidth()/numLoopsInRow, loopFrameGrabber.getHeight()/numLoopsInRow);
                 display.push_back(displayIm);
-                vidPlayer.nextFrame();
+                vidPlayer->nextFrame();
                 cout << "Updating Vid Player" << endl;
-                vidPlayer.update();
+                vidPlayer->update();
             }
-            //vidPlayer.setFrame(frameStart);
-            //cout << "Updating Vid Player" << endl;
-            //vidPlayer.update();
-            //loopFrameGrabber.close();
+            vidPlayer->setFrame(frameStart);
+            vidPlayer->update();
             
-            //ofVec2f indices = ofVec2f(frameStart, matchIndeces.at(bestEnd));
-            //int indices[2] = {frameStart,matchIndeces.at(bestEnd)};
             vector<int> indices;
-            
             indices.push_back(frameStart);
             indices.push_back(matchIndeces.at(bestEnd));
+            
             loopIndeces->push_back(indices);
             loopLengths->push_back(display.size());
             displayLoops->push_back(display);
@@ -324,16 +274,74 @@ public:
             loopPlayIdx->push_back(0);
             loopStartMats->push_back(start);
             
+            //ditchSimilarLoop();
             loopFoundEventArgs args;
             args.loopThread = this;
             args.indices = indices;
             ofNotifyEvent(loopEvents.loopFoundEvent, args);
-    
-            //ditchSimilarLoop();
         }
         
         bestMatches.clear();
         matchIndeces.clear();
+    }
+    
+    bool ditchSimilarLoop(){
+        if (displayLoops->size() == 1)
+            return false;
+        
+        cv::Mat prevLoopMat;
+        loopStartMats->at(loopStartMats->size()-2).copyTo(prevLoopMat);
+        cv::Mat newLoopMat;
+        loopStartMats->at(loopStartMats->size()-1).copyTo(newLoopMat);
+        
+        float prevLoopSum = cv::sum(prevLoopMat)[0] + 1;
+        
+        cv::Mat diff;
+        cv::absdiff(prevLoopMat, newLoopMat, diff);
+        float endDiff = cv::sum(diff)[0] + 1;
+        
+        float changeRatio = endDiff/prevLoopSum;
+        cout << "changeRatio: " << changeRatio << endl;
+        float changePercent = (changeRatio*100);
+        cout << "changePercent: " << changePercent << endl;
+        if((changeRatio*100) <= (100-loopThresh)){ // the first frames are very similar
+            
+            if (loopQuality->at(loopQuality->size() - 2) < loopQuality->at(loopQuality->size() -1)) {
+                cout << "erasing last one" << endl;
+                loopQuality->erase(loopQuality->end() - 1);
+                loopLengths->erase(loopLengths->end() - 1);
+                loopPlayIdx->erase(loopPlayIdx->end() - 1);
+                ofImage im;
+                vector<ofImage *> disp = displayLoops->at(displayLoops->size() - 1);
+                for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
+                    (*i)->setUseTexture(false);
+                    delete *i;
+                }
+                displayLoops->erase(displayLoops->end() - 1);
+                loopIndeces->erase(loopIndeces->end() - 1);
+                loopStartMats->erase(loopStartMats->end() - 1);
+            }
+            else{
+                cout << "erasing second to last" << endl;
+                loopQuality->erase(loopQuality->end() - 2 );
+                loopLengths->erase(loopLengths->end() - 2);
+                loopPlayIdx->erase(loopPlayIdx->end() - 2);
+                vector<ofImage *> disp = displayLoops->at(displayLoops->size() - 2);
+                for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
+                    (*i)->setUseTexture(false);
+                    delete *i;
+                }
+                disp.clear();
+                displayLoops->erase(displayLoops->end() - 2);
+                loopIndeces->erase(loopIndeces->end() - 2);
+                loopStartMats->erase(loopStartMats->end() - 2);
+            }
+            return true;
+            
+        }
+        cout << "keeping loop" << endl;
+        return false;
+        
     }
 
     
