@@ -87,8 +87,8 @@ public:
     float loopHeight;
     
     int loopSelected;
+    int frameBeforeRefine;
     bool refiningLoop;
-    bool savingGif;
     
     ofRange oldRange;
     
@@ -124,6 +124,8 @@ public:
     
     int gifNum;
     vector<ofxGifEncoder *> gifses;
+    bool savingGif;
+    bool gifSaveThreadRunning;
     
     bool pausePlayback;
     bool videoLoaded;
@@ -142,11 +144,16 @@ public:
 	void setGuiMatch();
     void setGuiLoops();
     void setGuiInstructions();
+    void setGuiLoopStatus();
 	ofxUISuperCanvas *guiMatch;
     ofxUISuperCanvas *guiLoops;
     ofxUILabel statusLabel;
+    ofxUISpacer *gifSaveSpacer;
+    ofxUILabel *gifSaveStatusLabel;
     ofxUITextArea *loopsIndexLabel;
     ofxUITextArea *loopsFoundLabel;
+    ofxUITextArea *loopStatsLabelTime;
+    ofxUITextArea *loopStatsLabelFrame;
     bool pageLeft;
     bool pageRight;
     ofxUISlider *minMove;
@@ -158,11 +165,10 @@ public:
 	bool hideGUI;
 	void guiEvent(ofxUIEventArgs &e);
     
-    //Testing Thread
+    //Thread
     vector< loopFindThread*> threads;
     loopFindThread thread;
     ofQTKitPlayer threadPlayer;
-    
     loopFindEvents loopEvents;
 
 };

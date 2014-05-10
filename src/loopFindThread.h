@@ -128,7 +128,7 @@ public:
             //cout << "test Thresh: " << 100 - loopThresh << endl;
             //cout << endl;
             
-            if ((changeRatio*100) < (100 - loopThresh)){//set to change percentage
+            if ((changeRatio*100) <=  (100 - loopThresh)){//set to change percentage
                 potentialEndIdx = frameStart + i;
                 //cout << "potentialEnd: " << potentialEndIdx << endl;
                 if (minMovementBool || maxMovementBool){
@@ -272,7 +272,6 @@ public:
             loopPlayIdx->push_back(0);
             loopStartMats->push_back(start);
             
-            //ditchSimilarLoop();
             loopFoundEventArgs args;
             args.loopThread = this;
             args.indices = indices;
@@ -281,65 +280,6 @@ public:
         
         bestMatches.clear();
         matchIndeces.clear();
-    }
-    
-    bool ditchSimilarLoop(){
-        if (displayLoops->size() == 1)
-            return false;
-        
-        cv::Mat prevLoopMat;
-        loopStartMats->at(loopStartMats->size()-2).copyTo(prevLoopMat);
-        cv::Mat newLoopMat;
-        loopStartMats->at(loopStartMats->size()-1).copyTo(newLoopMat);
-        
-        float prevLoopSum = cv::sum(prevLoopMat)[0] + 1;
-        
-        cv::Mat diff;
-        cv::absdiff(prevLoopMat, newLoopMat, diff);
-        float endDiff = cv::sum(diff)[0] + 1;
-        
-        float changeRatio = endDiff/prevLoopSum;
-        cout << "changeRatio: " << changeRatio << endl;
-        float changePercent = (changeRatio*100);
-        cout << "changePercent: " << changePercent << endl;
-        if((changeRatio*100) <= (100-loopThresh)){ // the first frames are very similar
-            
-            if (loopQuality->at(loopQuality->size() - 2) < loopQuality->at(loopQuality->size() -1)) {
-                cout << "erasing last one" << endl;
-                loopQuality->erase(loopQuality->end() - 1);
-                loopLengths->erase(loopLengths->end() - 1);
-                loopPlayIdx->erase(loopPlayIdx->end() - 1);
-                ofImage im;
-                vector<ofImage *> disp = displayLoops->at(displayLoops->size() - 1);
-                for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
-                    (*i)->setUseTexture(false);
-                    delete *i;
-                }
-                displayLoops->erase(displayLoops->end() - 1);
-                loopIndeces->erase(loopIndeces->end() - 1);
-                loopStartMats->erase(loopStartMats->end() - 1);
-            }
-            else{
-                cout << "erasing second to last" << endl;
-                loopQuality->erase(loopQuality->end() - 2 );
-                loopLengths->erase(loopLengths->end() - 2);
-                loopPlayIdx->erase(loopPlayIdx->end() - 2);
-                vector<ofImage *> disp = displayLoops->at(displayLoops->size() - 2);
-                for (std::vector<ofImage *>::iterator i = disp.begin(); i != disp.end(); ++i){
-                    (*i)->setUseTexture(false);
-                    delete *i;
-                }
-                disp.clear();
-                displayLoops->erase(displayLoops->end() - 2);
-                loopIndeces->erase(loopIndeces->end() - 2);
-                loopStartMats->erase(loopStartMats->end() - 2);
-            }
-            return true;
-            
-        }
-        cout << "keeping loop" << endl;
-        return false;
-        
     }
 
     
