@@ -4,7 +4,7 @@ using namespace cv;
 using namespace ofxCv;
 
 void ofApp::setup(){
-    ofSetWindowTitle("LoopFindr");
+    ofSetWindowTitle("loopFindr");
     
     videoLoaded = false;
     videoGood = true;
@@ -69,13 +69,11 @@ void ofApp::initEnds(){
         potentialLoopEnds.clear();
     }
     
-    cout << "frameStart: " << frameStart << endl;
     vidPlayer.setPaused(true);
     vidPlayer.setFrame(frameStart);
     vidPlayer.update();
     
     for (int i = frameStart; i < vidPlayer.getTotalNumFrames() && i < frameStart + maxPeriod; i++) {
-        cout << "init ends frame: " << vidPlayer.getCurrentFrame() << endl;
         cv::Mat currGray;
         cv::cvtColor(toCv(vidPlayer), currGray, CV_RGB2GRAY);
         cv::Mat currFrame;
@@ -94,7 +92,6 @@ void ofApp::initEnds(){
 
 //------------------------------------------------------------------------------------
 void ofApp::populateLoopEnds(){
-    //thread.waitForThread();
     if (potentialLoopEnds.size() > 0){
         potentialLoopEnds.erase(potentialLoopEnds.begin());
         
@@ -137,9 +134,7 @@ bool ofApp::ditchSimilarLoop(){
     float endDiff = cv::sum(diff)[0] + 1;
     
     float changeRatio = endDiff/prevLoopSum;
-    cout << "changeRatio: " << changeRatio << endl;
     float changePercent = (changeRatio*100);
-    cout << "changePercent: " << changePercent << endl;
     if((changeRatio*100) <= (100-loopThresh)){ // the first frames are very similar
         
         if (loopQuality.at(loopQuality.size() - 2) < loopQuality.at(loopQuality.size() -1)) {
@@ -169,11 +164,8 @@ bool ofApp::ditchSimilarLoop(){
             loopStartMats.erase(loopStartMats.end() - 2);
         }
         return true;
-        
     }
-    cout << "keeping loop" << endl;
     return false;
-    
 }
 
 //------------------------------------------------------------------------------------
@@ -210,6 +202,8 @@ void ofApp::update(){
         }
         else if (videoLoaded && needToInitEnds)
             initEnds();
+        else if(videoLoaded && !timeline.getIsPlaying())
+            guiLoops->getCanvasTitle()->setLabel("");
     }
     else{
         needToInitEnds = false;
@@ -217,7 +211,7 @@ void ofApp::update(){
             timeVid.nextFrame();
             timeVid.update();
         }
-        guiLoops->getCanvasTitle()->setLabel("");
+        //guiLoops->getCanvasTitle()->setLabel("");
     }
     if(!refiningLoop){
         for (int i = 0; i < loopPlayIdx.size(); i++) {
@@ -314,8 +308,7 @@ void ofApp::mousePressed(int x, int y, int button){
                     loopSelected = -1;
                     return;
                 }
-                string changeString;
-                instructions = "Press 's' to save loop as a GIF. Press 'r' to refine the loop";
+                instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop. Press 'd' to delete loop.";
                 setGuiInstructions();
                 setGuiLoopStatus();
             }
@@ -380,14 +373,6 @@ void ofApp::saveGif(int i){
         
         gifSaveThreadRunning = true;
         setGuiInstructions();
-        /*guiMatch->removeWidget(gifSaveSpacer);
-        guiMatch->update();
-        guiMatch->removeWidget(gifSaveStatusLabel);
-        guiMatch->update();
-        
-        gifSaveSpacer = guiMatch->addSpacer();
-        gifSaveStatusLabel = guiMatch->addLabel("Gif Save Status", "Gif Saving. Don't exit.");
-        guiMatch->update();*/
     }
     
     if (timeWasPlaying) {
@@ -449,9 +434,14 @@ void ofApp::keyPressed(int key){
                 updateRefinedLoop();
                 timeVid.setFrame(frameBeforeRefine);
                 update();
-                instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop.";
+                instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop. Press 'd' to delete loop.";
                 setGuiInstructions();
                 needToInitEnds = true;
+            }
+            break;
+        case 'd':
+            if (!refiningLoop && loopSelected >= 0) {
+                deleteLoop();
             }
             break;
         case 'n':
@@ -461,7 +451,7 @@ void ofApp::keyPressed(int key){
                 //timeline.setInOutRange(inOutTotal);
                 timeline.clearInOut();
                 timeline.getZoomer()->setViewRange(oldRange);
-                instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop.";
+                instructions = "Press 's' to save loop as a GIF. Press 'r' to keep your changes to the loop. Press 'd' to delete loop.";
                 setGuiInstructions();
                 timeVid.setFrame(frameBeforeRefine);
                 timeVid.update();
@@ -639,6 +629,37 @@ void ofApp::updateRefinedLoop(){
     //loopPlayIdx.at(loopSelected) = 0;
     //loopQuality.at(loopSelected) = changeRatio;
     //loopStartMats.at(loopSelected) = start;
+}
+
+void ofApp::deleteLoop(){
+    if (loopSelected < 0) {
+        return;
+    }
+    vector<int>::iterator it = loopLengths.begin()+loopSelected;
+    it = loopLengths.erase(it);
+    vector<vector<ofImage*> >::iterator it2 = displayLoops.begin()+loopSelected;
+    for (int i = 0; i < displayLoops.at(loopSelected).size(); i++) {
+        delete displayLoops.at(loopSelected).at(i);
+    }
+    it2 = displayLoops.erase(displayLoops.begin()+loopSelected);
+    vector<int>::iterator it3 = loopPlayIdx.begin()+loopSelected;
+    it3 = loopPlayIdx.erase(it3);
+    vector<float>::iterator it4 = loopQuality.begin()+loopSelected;
+    it4 = loopQuality.erase(it4);
+    vector<cv::Mat>::iterator it5 = loopStartMats.begin()+loopSelected;
+    it5 = loopStartMats.erase(it5);
+    vector<vector<int> >::iterator it6 = loopIndeces.begin()+loopSelected;
+    it6 = loopIndeces.erase(it6);
+    loopSelected = -1;
+    if (loopPage*3 >= displayLoops.size() && loopPage > 0) {
+        loopPage--;
+    }
+    loopsOnDisplay.at(0) = loopPage*3 + 1;
+    loopsOnDisplay.at(1) = loopPage*3 + 2;
+    loopsOnDisplay.at(2) = loopPage*3 + 3;
+    loopsFoundLabel->setTextString("                              Number of Loops Found: " + ofToString(displayLoops.size()));
+    loopsIndexLabel->setTextString("                            Current Loops Displayed: " + ofToString(loopsOnDisplay.at(0)) + " - " + ofToString(loopsOnDisplay.at(2)));
+    setGuiLoopStatus();
 }
 
 

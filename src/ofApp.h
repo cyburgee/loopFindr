@@ -42,6 +42,7 @@ public:
     void playScrubbed(ofxTLPlaybackEventArgs& playbackEvent);
     void playLooped(ofxTLPlaybackEventArgs& playbackEvent);
     void foundLoop(loopFoundEventArgs& loopArgs);
+    void deleteLoop();
     
     void addLoopFrames();
     
