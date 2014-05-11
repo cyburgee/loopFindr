@@ -211,7 +211,7 @@ void ofApp::update(){
             timeVid.nextFrame();
             timeVid.update();
         }
-        //guiLoops->getCanvasTitle()->setLabel("");
+        guiLoops->getCanvasTitle()->setLabel("");
     }
     if(!refiningLoop){
         for (int i = 0; i < loopPlayIdx.size(); i++) {
@@ -674,15 +674,23 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
 {
 	string name = e.getName();
     if(name == "Load Video"){
-        videoLoaded = false;
 		ofxUIButton *button = (ofxUIButton *) e.getButton();
         if (button->getValue()){
             timeline.stop();
-            //pausePlayback = true;
+            thread.waitForThread();
+            loopFound = false;
+            
+            if (displayLoops.size() > 0)
+                ofSystemAlertDialog("Loading a new video will delete all previously found loops.");
+            
             ofFileDialogResult result = ofSystemLoadDialog("Choose a Video File",false);
             if(result.bSuccess){
-                //need to clear old data
-                //timeline.removeTrack("Video");
+                videoLoaded = false;
+                int numLoops = displayLoops.size();
+                for (int i = 0 ; i < numLoops; i++) {
+                    loopSelected = 0;
+                    deleteLoop();
+                }
                 loadVideo(result.getPath(),result.getName());
             }
         }
@@ -795,8 +803,6 @@ void ofApp::setGuiLoopStatus(){
     string loopStatusFrameString = "                     Frame In: " + inFrame + "                Frame Out: " + outFrame;
     string loopStatusTimeString = "                  Time In: " + inTime + "         Time Out: " + outTime;
 
-    //string loopStatusTimeString = "        Time In: " + inTime + "                              Time Out: " + outTime;
-    //string loopStatusFrameString = "        Frame In: " + inFrame + "                              Frame Out: " + outFrame;
     loopStatsLabelTime->setTextString(loopStatusTimeString);
     loopStatsLabelFrame->setTextString(loopStatusFrameString);
     guiLoops->update();
@@ -853,10 +859,7 @@ void ofApp::setGuiMatch(){
     instructLabel = guiMatch->addTextArea("Instructions", pauseInstruct + instructions, OFX_UI_FONT_SMALL);
     
     gifSaveSpacer = guiMatch->addSpacer("gifSaveSpacer");
-    //gifSaveSpacer->setVisible(false);
     gifSaveStatusLabel = guiMatch->addLabel("Gif Save Status", "Gif Saving. Don't exit.");
-    //gifSaveStatusLabel->setVisible(false);
-    
     
     guiMatch->setHeight(ofGetHeight());
     maxMove->setVisible(maxMovementBool);
@@ -934,6 +937,7 @@ void ofApp::loadVideo(string videoPath, string videoName){
         videoTrack->setName(videoName);
     }
     if(videoLoaded){
+        
         float vidHeight = std::min(videoTrack->getPlayer()->getHeight(),360.0f);
         float scaleRatio = videoTrack->getPlayer()->getHeight()/vidHeight;
         int vidWidth = videoTrack->getPlayer()->getWidth()/scaleRatio;
