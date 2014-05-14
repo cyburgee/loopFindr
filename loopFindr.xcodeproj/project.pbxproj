@@ -305,6 +305,7 @@
 		1881A04519109F7B001B5F45 /* ofxTLZoomer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxTLZoomer.h; sourceTree = "<group>"; };
 		18B00F821915E005006701C8 /* loopFindThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = loopFindThread.h; sourceTree = "<group>"; };
 		18B00F8619160BDE006701C8 /* loopFindEvents.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = loopFindEvents.h; sourceTree = "<group>"; };
+		18E07CE81923B75F00082F25 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
 		1902452F5E510A2DBC1E5BD6 /* ofxUIMultiImageToggle.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUIMultiImageToggle.h; path = ../../../addons/ofxUI/src/ofxUIMultiImageToggle.h; sourceTree = SOURCE_ROOT; };
 		1C0DA2561397A7DE0246858B /* ofxGuiGroup.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxGuiGroup.h; path = ../../../addons/ofxGui/src/ofxGuiGroup.h; sourceTree = SOURCE_ROOT; };
 		1C43CDB79BF40EA7424B9680 /* ofxUISuperCanvas.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUISuperCanvas.h; path = ../../../addons/ofxUI/src/ofxUISuperCanvas.h; sourceTree = SOURCE_ROOT; };
@@ -1628,6 +1629,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				18E07CE81923B75F00082F25 /* icon.icns */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
 				E4B69E1C0A3A1BDC003C02F2 /* src */,
@@ -2176,6 +2178,8 @@
 				);
 				ICON = "$(ICON_NAME_DEBUG)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
+				ICON_FILE_PATH = "$(SRCROOT)/bin/data/";
+				ICON_NAME_DEBUG = icon.icns;
 				INFOPLIST_FILE = "openFrameworks-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
@@ -2339,6 +2343,8 @@
 				);
 				ICON = "$(ICON_NAME_RELEASE)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
+				ICON_FILE_PATH = "$(SRCROOT)/bin/data/";
+				ICON_NAME_DEBUG = icon.icns;
 				INFOPLIST_FILE = "openFrameworks-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (

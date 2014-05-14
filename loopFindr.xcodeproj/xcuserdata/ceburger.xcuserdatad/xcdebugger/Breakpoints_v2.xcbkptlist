@@ -378,11 +378,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/ofApp.cpp"
-            timestampString = "421522306.777162"
+            timestampString = "421525258.554748"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1086"
-            endingLineNumber = "1086"
+            startingLineNumber = "1091"
+            endingLineNumber = "1091"
             landmarkName = "ofApp::addLoopFrames()"
             landmarkType = "5">
          </BreakpointContent>
@@ -394,11 +394,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/ofApp.cpp"
-            timestampString = "421522306.777162"
+            timestampString = "421525258.554748"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1087"
-            endingLineNumber = "1087"
+            startingLineNumber = "1092"
+            endingLineNumber = "1092"
             landmarkName = "ofApp::addLoopFrames()"
             landmarkType = "5">
          </BreakpointContent>
@@ -530,11 +530,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/ofApp.cpp"
-            timestampString = "421522306.777162"
+            timestampString = "421525258.554748"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "905"
-            endingLineNumber = "905"
+            startingLineNumber = "907"
+            endingLineNumber = "907"
             landmarkName = "ofApp::loadVideo(string videoPath, string videoName)"
             landmarkType = "5">
          </BreakpointContent>
@@ -546,11 +546,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/ofApp.cpp"
-            timestampString = "421522306.777162"
+            timestampString = "421525258.554748"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1074"
-            endingLineNumber = "1074"
+            startingLineNumber = "1079"
+            endingLineNumber = "1079"
             landmarkName = "ofApp::foundLoop(loopFoundEventArgs&amp; loopArgs)"
             landmarkType = "5">
          </BreakpointContent>

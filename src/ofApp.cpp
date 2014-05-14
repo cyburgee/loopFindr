@@ -4,7 +4,7 @@ using namespace cv;
 using namespace ofxCv;
 
 void ofApp::setup(){
-    ofSetWindowTitle("loopFindr");
+    ofSetWindowTitle("Loop Findr");
     
     videoLoaded = false;
     videoGood = true;
@@ -859,7 +859,9 @@ void ofApp::setGuiMatch(){
     instructLabel = guiMatch->addTextArea("Instructions", pauseInstruct + instructions, OFX_UI_FONT_SMALL);
     
     gifSaveSpacer = guiMatch->addSpacer("gifSaveSpacer");
+    gifSaveSpacer->setVisible(false);
     gifSaveStatusLabel = guiMatch->addLabel("Gif Save Status", "Gif Saving. Don't exit.");
+    gifSaveStatusLabel->setVisible(false);
     
     guiMatch->setHeight(ofGetHeight());
     maxMove->setVisible(maxMovementBool);
@@ -1007,6 +1009,9 @@ void ofApp::loadVideo(string videoPath, string videoName){
             ofSetWindowShape(ofGetWidth(),ofGetHeight()+(loopHeight-152));
             setGuiMatch();
             setGuiLoops();
+        }
+        else{
+            ofSetWindowShape(1024, 768);
         }
         
         ofPoint firstPoint = ofPoint(guiMatch->getGlobalCanvasWidth(), ofGetHeight()-loopHeight);
