@@ -9,7 +9,7 @@ I have used clipconverter.cc to get youtube and vimeo videos with success.
 
 Install:
 =========
-Get the .app from the zipped download of the repostitory, because I've made some changes to the addons that it requires as well as OpenFrameworks. I'll include some details as to those in the near future when I track them all down.
+Download the app here https://www.dropbox.com/s/rne3kxkoam1oa58/Loop%20Findr.zip or get the .app from the zipped download of the repostitory, because I've made some changes to the addons that it requires as well as OpenFrameworks. I'll include some details as to those in the near future when I track them all down.
 
 
 Usage Details:
